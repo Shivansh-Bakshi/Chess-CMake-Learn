@@ -22,7 +22,7 @@ namespace ch {
             uint8_t x;
             uint8_t y;
 
-            void moveHighlight();
+            void moveHighlight(bool displayPossible = false);
 
             public:
 

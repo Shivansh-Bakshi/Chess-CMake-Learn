@@ -5,11 +5,15 @@
 
 using namespace ch::game;
 
-void Game::moveHighlight()
+void Game::moveHighlight(bool displayPossible)
 {
     uint8_t inp = 0;
 takeInput:
-    b.display(x, y);
+    if(displayPossible) {
+        b.displayPossibleMoves(x, y);
+    } else {
+        b.display(x, y);
+    }
     inp = getch();
     // Key pressed was a special key
     if (inp == 224) {
@@ -79,20 +83,32 @@ void Game::Move()
     x = 0;
     y = 0;
 
-makeSelection:
-    moveHighlight();
+selectSource:
+    moveHighlight(false);
 
     if(b.isSelectValid(c_currTurn, x, y)) {
         std::cout << "Selected Piece : " << static_cast<int>(b.getPieceAtIndex(x, y)) << std::endl;
-        b.getPossibleMoves(x, y);
+        uint8_t countPossible = b.getPossibleMoves(x, y);
 
-        uint8_t s_x = x;
-        uint8_t s_y = y;
+        if (countPossible == 0) {
+            std::cout << "This piece cannot move. Select another piece" << std::endl;
+            goto selectSource;
+        }
+        moveHighlight(true);
 
-        b.displayPossibleMoves(s_x, s_y);
+        if(b.isValidMove(c_currTurn, x, y)) {
+            std::cout << "Valid move" << std::endl;
+            
+            c_currTurn = !c_currTurn;
+            return;
+        } else {
+            std::cout << "Invalid Destination" << std::endl << "Select a piece" << std::endl;
+            goto selectSource;
+        }
+
     } else {
         std::cout << "Invalid Selection. Please choose from one of your pieces" << std::endl;
-        goto makeSelection;
+        goto selectSource;
     }
 }
 
