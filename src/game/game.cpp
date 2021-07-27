@@ -13,7 +13,6 @@ Game::Game()
 
     // The new Game is active
     c_isActive = true;
-    // Token check
 }
 
 void Game::Move()
