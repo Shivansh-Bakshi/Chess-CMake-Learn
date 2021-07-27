@@ -44,9 +44,9 @@ namespace ch::components {
         // Update Canvas
         // Called when a move is made
         // Parameters:
-        // p_i, p_j = row,col index of piece on the board
-        // t_x, t_y = translation in x, y of the piece
-        void updateCanvas(uint8_t p_i, uint8_t p_j, uint8_t t_x, uint8_t t_y);
+        // s_x, s_y = x,y index of source of piece on the board
+        // d_x, d_y = destination in x, y of the piece
+        void updateCanvas(uint8_t s_x, uint8_t s_y, uint8_t d_x, uint8_t d_y);
         
         // Display Board
         void display() const;
@@ -61,10 +61,12 @@ namespace ch::components {
         bool isSelectValid(bool currTurn, uint8_t s_x, uint8_t s_y) const;
 
         // Get the possible moves a selected piece can make
-        void getPossibleMoves(uint8_t s_x, uint8_t s_y);
+        uint8_t getPossibleMoves(uint8_t s_x, uint8_t s_y);
 
         // Display the possible moves after getting them.
         void displayPossibleMoves(uint8_t s_x, uint8_t s_y) const;
+
+        bool isValidMove(bool currTurn, uint8_t d_x, uint8_t d_y) const;
     };
 }
 

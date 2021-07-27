@@ -1,6 +1,9 @@
 #include "board.h"
 #include "../utils/typeutils.h"
 #include <algorithm>
+#include <cstdio>
+#include <fcntl.h>
+#include <io.h>
 
 using namespace ch::components;
 using namespace ch::utils;
@@ -87,11 +90,11 @@ void Board::setup()
 
 }
 
-void Board::updateCanvas(uint8_t p_i, uint8_t p_j, uint8_t t_x, uint8_t t_y)
+void Board::updateCanvas(uint8_t s_x, uint8_t s_y, uint8_t d_x, uint8_t d_y)
 {
-    Piece temp = matrix[p_i][p_j];
-    matrix[p_i][p_j] = Piece(pieceval::DEFAULT);
-    matrix[p_i + t_x][p_j + t_y] = temp;
+    Piece temp = matrix[s_x][s_y];
+    matrix[s_x][s_y] = Piece(pieceval::DEFAULT);
+    matrix[d_x][d_y] = temp;
 }
 
 
@@ -104,8 +107,15 @@ void Board::display() const
     for (uint8_t i = 0; i < BOARD_DIM; i++) {
         std::cout << i + 1 << "\t";
         for (uint8_t j = 0; j < BOARD_DIM; j++) {
-            std::cout << static_cast<int>(matrix[i][j].getIntValue()) << "\t";
+            // std::cout << static_cast<int>(matrix[i][j].getIntValue()) << "\t";
+            if ((i + j) % 2 == 0) {
+                c.setBackgroundLight();
+            }
+            _setmode(_fileno(stdout), _O_WTEXT);
+            std::wcout << matrix[i][j].getUnicode() << "\t";
+            c.resetColor();
         }
+        _setmode(_fileno(stdout), O_TEXT);
         std::cout << std::endl;
     }
     std::cout<<std::endl;
@@ -122,13 +132,18 @@ void Board::display(uint8_t p_i, uint8_t p_j) const
         for (uint8_t j = 0; j < BOARD_DIM; j++) {
             if (i == p_i && j == p_j) {
                 c.setSelectedColor();
-                std::cout << static_cast<int>(matrix[i][j].getIntValue());
+                _setmode(_fileno(stdout), _O_WTEXT);
+                std::wcout << matrix[i][j].getUnicode() << "\t";
                 c.resetColor();
-                std::cout << "\t";
                 continue;
+            } else if ((i + j) % 2 == 0) {
+                c.setBackgroundLight();
             }
-            std::cout << static_cast<int>(matrix[i][j].getIntValue()) << "\t";
+            _setmode(_fileno(stdout), _O_WTEXT);
+            std::wcout << matrix[i][j].getUnicode() << "\t";
+            c.resetColor();
         }
+        _setmode(_fileno(stdout), O_TEXT);
         std::cout << std::endl;
     }
     std::cout<<std::endl;
@@ -158,8 +173,9 @@ bool Board::isSelectValid(bool currTurn, uint8_t s_x, uint8_t s_y) const
     }
 }
 
-void Board::getPossibleMoves(uint8_t s_x, uint8_t s_y)
+uint8_t Board::getPossibleMoves(uint8_t s_x, uint8_t s_y)
 {
+    uint8_t countMoves = 0;
     allowed_moves.clear();
     Piece p = matrix[s_x][s_y];
     pieceval p_val = p.getValue();
@@ -169,14 +185,17 @@ void Board::getPossibleMoves(uint8_t s_x, uint8_t s_y)
             // If the black pawn has not moved, it can move 2 spaces up if those 2 spaces are empty
             if (isEmptySpace(s_x - 1, s_y) && isInBoardBounds(s_x - 1, s_y)) {
                 allowed_moves.push_back(std::make_pair(s_x - 1, s_y));
+                countMoves++;
                 if (isEmptySpace(s_x - 2, s_y) && isInBoardBounds(s_x - 2, s_y)) {
                     allowed_moves.push_back(std::make_pair(s_x - 2, s_y));
+                    countMoves++;
                 }
             }
         } else {
             // If the black pawn has moved before, it can only move 1 space up
             if (isEmptySpace(s_x - 1, s_y) && isInBoardBounds(s_x - 1, s_y)) {
             allowed_moves.push_back(std::make_pair(s_x - 1, s_y));
+            countMoves++;
             }  
         }
     }
@@ -186,14 +205,17 @@ void Board::getPossibleMoves(uint8_t s_x, uint8_t s_y)
             // If the white pawn has not moved, it can move 2 spaces down if those 2 spaces are empty
             if (isEmptySpace(s_x + 1, s_y) && isInBoardBounds(s_x + 1, s_y)) {
                 allowed_moves.push_back(std::make_pair(s_x + 1, s_y));
+                countMoves++;
                 if (isEmptySpace(s_x + 2, s_y) && isInBoardBounds(s_x + 2, s_y)) {
                     allowed_moves.push_back(std::make_pair(s_x + 2, s_y));
+                    countMoves++;
                 }
             }
         } else {
             // If the white pawn has moved before, it can only move 1 space down
             if (isEmptySpace(s_x + 1, s_y) && isInBoardBounds(s_x + 1, s_y)) {
-            allowed_moves.push_back(std::make_pair(s_x + 1, s_y));
+                allowed_moves.push_back(std::make_pair(s_x + 1, s_y));
+                countMoves++;
             }  
         }
     }
@@ -213,6 +235,7 @@ void Board::getPossibleMoves(uint8_t s_x, uint8_t s_y)
             // Inner loop to move in direction from selected position till board boundary or another piece is hit
             while (isEmptySpace(s_x + x_off, s_y + y_off) && isInBoardBounds(s_x + x_off, s_y + y_off)) {
                 allowed_moves.push_back(std::make_pair(s_x + x_off, s_y + y_off));
+                countMoves++;
                 x_off += m_x[i];
                 y_off += m_y[i];
             }
@@ -234,6 +257,7 @@ void Board::getPossibleMoves(uint8_t s_x, uint8_t s_y)
             // Inner loop to move in direction from selected position till board boundary or another piece is hit
             while (isEmptySpace(s_x + x_off, s_y + y_off) && isInBoardBounds(s_x + x_off, s_y + y_off)) {
                 allowed_moves.push_back(std::make_pair(s_x + x_off, s_y + y_off));
+                countMoves++;
                 x_off += m_x[i];
                 y_off += m_y[i];
             }
@@ -249,6 +273,7 @@ void Board::getPossibleMoves(uint8_t s_x, uint8_t s_y)
         for (uint8_t i = 0; i < 8; i++) {
             if (isEmptySpace(s_x + m_x[i], s_y + m_y[i]) && isInBoardBounds(s_x + m_x[i], s_y + m_y[i])) {
                 allowed_moves.push_back(std::make_pair(s_x + m_x[i], s_y + m_y[i]));
+                countMoves++;
             }
         }
     }
@@ -268,6 +293,7 @@ void Board::getPossibleMoves(uint8_t s_x, uint8_t s_y)
             // Inner loop to move in direction from selected position till board boundary or another piece is hit
             while (isEmptySpace(s_x + x_off, s_y + y_off) && isInBoardBounds(s_x + x_off, s_y + y_off)) {
                 allowed_moves.push_back(std::make_pair(s_x + x_off, s_y + y_off));
+                countMoves++;
                 x_off += m_x[i];
                 y_off += m_y[i];
             }
@@ -283,11 +309,12 @@ void Board::getPossibleMoves(uint8_t s_x, uint8_t s_y)
         for (uint8_t i = 0; i < 8; i++) {
             if (isEmptySpace(s_x + m_x[i], s_y + m_y[i]) && isInBoardBounds(s_x + m_x[i], s_y + m_y[i])) {
                 allowed_moves.push_back(std::make_pair(s_x + m_x[i], s_y + m_y[i]));
+                countMoves++;
             }
         }
     }
 
-    return;
+    return countMoves;
 }
 
 void Board::displayPossibleMoves(uint8_t s_x, uint8_t s_y) const
@@ -302,22 +329,36 @@ void Board::displayPossibleMoves(uint8_t s_x, uint8_t s_y) const
             // If (i, j) is currently highlighted
             if (i == s_x && j == s_y) {
                 c.setSelectedColor();
-                std::cout << static_cast<int>(matrix[i][j].getIntValue());
+                _setmode(_fileno(stdout), _O_WTEXT);
+                std::wcout << matrix[i][j].getUnicode() << "\t";
                 c.resetColor();
-                std::cout << "\t";
+                continue;
             }
             // If (i, j) is an allowed move:
             else if (std::find(allowed_moves.begin(), allowed_moves.end(), std::make_pair(i, j)) != allowed_moves.end()) {
                 c.setPossibleColor();
-                std::cout << static_cast<int>(matrix[i][j].getIntValue());
+                _setmode(_fileno(stdout), _O_WTEXT);
+                std::wcout << matrix[i][j].getUnicode() << "\t";
                 c.resetColor();
-                std::cout << "\t";
+                continue;
             }
-            else {
-                std::cout << static_cast<int>(matrix[i][j].getIntValue()) << "\t";
+            else if ((i + j) % 2 == 0){
+                c.setBackgroundLight();
             }
+            _setmode(_fileno(stdout), _O_WTEXT);
+            std::wcout << matrix[i][j].getUnicode() << "\t";
+            c.resetColor();
         }
+        _setmode(_fileno(stdout), O_TEXT);
         std::cout << std::endl;
     }
     std::cout<<std::endl;
+}
+
+bool Board::isValidMove(bool currTurn, uint8_t d_x, uint8_t d_y) const
+{
+    if (std::find(allowed_moves.begin(), allowed_moves.end(), std::make_pair(d_x, d_y)) != allowed_moves.end()) {
+        return true;
+    }
+    return false;
 }
