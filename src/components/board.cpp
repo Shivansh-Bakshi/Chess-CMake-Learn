@@ -5,6 +5,22 @@
 using namespace ch::components;
 using namespace ch::utils;
 
+bool Board::isEmptySpace(int8_t p_x, int8_t p_y) const
+{
+    if (matrix[p_x][p_y].getValue() == pieceval::DEFAULT) {
+        return true;
+    }
+    return false;
+}
+
+bool Board::isInBoardBounds(int8_t p_x, int8_t p_y) const
+{
+    if (p_x >= BOARD_DIM || p_x < 0 || p_y >= BOARD_DIM || p_y < 0) {
+        return false;
+    }
+    return true;
+}
+
 Board::Board()
 {
     c = WinColorUtils();
@@ -47,31 +63,83 @@ void Board::setup()
     // Pawns
     for(uint8_t i = 0; i < BOARD_DIM; i++) {
         matrix[BOARD_DIM - 2][i] = Piece(pieceval::PAWN_BLACK);
-        active_white.push_back(std::make_pair(BOARD_DIM - 2, i));
+        active_black.push_back(std::make_pair(BOARD_DIM - 2, i));
     }
 
     // Rest of the pieces
     matrix[BOARD_DIM - 1][0] = matrix[BOARD_DIM - 1][BOARD_DIM - 1] = Piece(pieceval::ROOK_BLACK);
-    active_white.push_back(std::make_pair(BOARD_DIM - 1, 0));
-    active_white.push_back(std::make_pair(BOARD_DIM - 1, BOARD_DIM - 1));
+    active_black.push_back(std::make_pair(BOARD_DIM - 1, 0));
+    active_black.push_back(std::make_pair(BOARD_DIM - 1, BOARD_DIM - 1));
 
     matrix[BOARD_DIM - 1][1] = matrix[BOARD_DIM - 1][BOARD_DIM - 2] = Piece(pieceval::KNIGHT_BLACK);
-    active_white.push_back(std::make_pair(BOARD_DIM - 1, 1));
-    active_white.push_back(std::make_pair(BOARD_DIM - 1, BOARD_DIM - 2));
+    active_black.push_back(std::make_pair(BOARD_DIM - 1, 1));
+    active_black.push_back(std::make_pair(BOARD_DIM - 1, BOARD_DIM - 2));
     
     matrix[BOARD_DIM - 1][2] = matrix[BOARD_DIM - 1][BOARD_DIM - 3] = Piece(pieceval::BISHOP_BLACK);
-    active_white.push_back(std::make_pair(BOARD_DIM - 1, 2));
-    active_white.push_back(std::make_pair(BOARD_DIM - 1, BOARD_DIM - 3));
+    active_black.push_back(std::make_pair(BOARD_DIM - 1, 2));
+    active_black.push_back(std::make_pair(BOARD_DIM - 1, BOARD_DIM - 3));
     
     matrix[BOARD_DIM - 1][3] = Piece(pieceval::QUEEN_BLACK);
-    active_white.push_back(std::make_pair(BOARD_DIM - 1, 3));
+    active_black.push_back(std::make_pair(BOARD_DIM - 1, 3));
     
     matrix[BOARD_DIM - 1][4] = Piece(pieceval::KING_BLACK);
-    active_white.push_back(std::make_pair(BOARD_DIM - 1, 4));
+    active_black.push_back(std::make_pair(BOARD_DIM - 1, 4));
 
 }
 
-bool Board::isSelectValid(bool currTurn, uint8_t s_x, uint8_t s_y)
+void Board::updateCanvas(uint8_t p_i, uint8_t p_j, uint8_t t_x, uint8_t t_y)
+{
+    Piece temp = matrix[p_i][p_j];
+    matrix[p_i][p_j] = Piece(pieceval::DEFAULT);
+    matrix[p_i + t_x][p_j + t_y] = temp;
+}
+
+
+void Board::display() const
+{
+    for(uint8_t i = 0; i < BOARD_DIM; i++) {
+        std::cout << " \t" << (char)('A' + i);
+    }
+    std::cout << std::endl;
+    for (uint8_t i = 0; i < BOARD_DIM; i++) {
+        std::cout << i + 1 << "\t";
+        for (uint8_t j = 0; j < BOARD_DIM; j++) {
+            std::cout << static_cast<int>(matrix[i][j].getIntValue()) << "\t";
+        }
+        std::cout << std::endl;
+    }
+    std::cout<<std::endl;
+}
+
+void Board::display(uint8_t p_i, uint8_t p_j) const
+{
+    for(uint8_t i = 0; i < BOARD_DIM; i++) {
+        std::cout << " \t" << (char)('A' + i);
+    }
+    std::cout << std::endl;
+    for (uint8_t i = 0; i < BOARD_DIM; i++) {
+        std::cout << i + 1 << "\t";
+        for (uint8_t j = 0; j < BOARD_DIM; j++) {
+            if (i == p_i && j == p_j) {
+                c.setSelectedColor();
+                std::cout << static_cast<int>(matrix[i][j].getIntValue());
+                c.resetColor();
+                std::cout << "\t";
+                continue;
+            }
+            std::cout << static_cast<int>(matrix[i][j].getIntValue()) << "\t";
+        }
+        std::cout << std::endl;
+    }
+    std::cout<<std::endl;
+}
+
+int8_t Board::getPieceAtIndex(uint8_t x, uint8_t y) const
+{
+    return matrix[x][y].getIntValue();
+}
+
+bool Board::isSelectValid(bool currTurn, uint8_t s_x, uint8_t s_y) const
 {
     if (currTurn) {
         // If selected piece is an active white piece, return true
@@ -90,53 +158,166 @@ bool Board::isSelectValid(bool currTurn, uint8_t s_x, uint8_t s_y)
     }
 }
 
-void Board::updateCanvas(uint8_t p_i, uint8_t p_j, uint8_t t_x, uint8_t t_y)
+void Board::getPossibleMoves(uint8_t s_x, uint8_t s_y)
 {
-    Piece temp = matrix[p_i][p_j];
-    matrix[p_i][p_j] = Piece(pieceval::DEFAULT);
-    matrix[p_i + t_x][p_j + t_y] = temp;
-}
-
-
-void Board::display()
-{
-    for(uint8_t i = 0; i < BOARD_DIM; i++) {
-        std::cout << " \t" << (char)('A' + i);
-    }
-    std::cout << std::endl;
-    for (uint8_t i = 0; i < BOARD_DIM; i++) {
-        std::cout << i + 1 << "\t";
-        for (uint8_t j = 0; j < BOARD_DIM; j++) {
-            std::cout << static_cast<int>(matrix[i][j].getIntValue()) << "\t";
-        }
-        std::cout << std::endl;
-    }
-    std::cout<<std::endl;
-}
-
-void Board::display(uint8_t p_i, uint8_t p_j)
-{
-    for(uint8_t i = 0; i < BOARD_DIM; i++) {
-        std::cout << " \t" << (char)('A' + i);
-    }
-    std::cout << std::endl;
-    for (uint8_t i = 0; i < BOARD_DIM; i++) {
-        std::cout << i + 1 << "\t";
-        for (uint8_t j = 0; j < BOARD_DIM; j++) {
-            if (i == p_i && j == p_j) {
-                c.setSelectedColor();
-                std::cout << static_cast<int>(matrix[i][j].getIntValue()) << "\t";
-                c.resetColor();
-                continue;
+    allowed_moves.clear();
+    Piece p = matrix[s_x][s_y];
+    pieceval p_val = p.getValue();
+    // If selected piece is a black pawn
+    if (p_val == pieceval::PAWN_BLACK) {
+        if (!p.hasMoved()) {
+            // If the black pawn has not moved, it can move 2 spaces up if those 2 spaces are empty
+            if (isEmptySpace(s_x - 1, s_y) && isInBoardBounds(s_x - 1, s_y)) {
+                allowed_moves.push_back(std::make_pair(s_x - 1, s_y));
+                if (isEmptySpace(s_x - 2, s_y) && isInBoardBounds(s_x - 2, s_y)) {
+                    allowed_moves.push_back(std::make_pair(s_x - 2, s_y));
+                }
             }
-            std::cout << static_cast<int>(matrix[i][j].getIntValue()) << "\t";
+        } else {
+            // If the black pawn has moved before, it can only move 1 space up
+            if (isEmptySpace(s_x - 1, s_y) && isInBoardBounds(s_x - 1, s_y)) {
+            allowed_moves.push_back(std::make_pair(s_x - 1, s_y));
+            }  
+        }
+    }
+    // If the selected piece is a white pawn
+    else if (p_val == pieceval::PAWN_WHITE) {
+            if (!p.hasMoved()) {
+            // If the white pawn has not moved, it can move 2 spaces down if those 2 spaces are empty
+            if (isEmptySpace(s_x + 1, s_y) && isInBoardBounds(s_x + 1, s_y)) {
+                allowed_moves.push_back(std::make_pair(s_x + 1, s_y));
+                if (isEmptySpace(s_x + 2, s_y) && isInBoardBounds(s_x + 2, s_y)) {
+                    allowed_moves.push_back(std::make_pair(s_x + 2, s_y));
+                }
+            }
+        } else {
+            // If the white pawn has moved before, it can only move 1 space down
+            if (isEmptySpace(s_x + 1, s_y) && isInBoardBounds(s_x + 1, s_y)) {
+            allowed_moves.push_back(std::make_pair(s_x + 1, s_y));
+            }  
+        }
+    }
+    // If the selected piece is a rook
+    else if (p_val == pieceval::ROOK_BLACK || p_val == pieceval::ROOK_WHITE) {
+        // Rook can move top, bottom, right, left
+        int8_t m_x[4] = {0, 0, 1, -1};
+        int8_t m_y[4] = {1, -1, 0, 0};
+
+        uint8_t x_off = 0;
+        uint8_t y_off = 0;
+
+        // Outer for loop for each direction
+        for (uint8_t i = 0; i < 4; i++) {
+            x_off = m_x[i];
+            y_off = m_y[i];
+            // Inner loop to move in direction from selected position till board boundary or another piece is hit
+            while (isEmptySpace(s_x + x_off, s_y + y_off) && isInBoardBounds(s_x + x_off, s_y + y_off)) {
+                allowed_moves.push_back(std::make_pair(s_x + x_off, s_y + y_off));
+                x_off += m_x[i];
+                y_off += m_y[i];
+            }
+        }
+    }
+    // If the selected piece is a bishop
+    else if (p_val == pieceval::BISHOP_BLACK || p_val == pieceval::BISHOP_WHITE) {
+        // Bishop can move top left, top right, bottom left, bottom right digonals
+        int8_t m_x[4] = {-1, 1, 1, -1};
+        int8_t m_y[4] = {1, -1, 1, -1};
+
+        uint8_t x_off = 0;
+        uint8_t y_off = 0;
+
+        // Outer for loop for each direction
+        for (uint8_t i = 0; i < 4; i++) {
+            x_off = m_x[i];
+            y_off = m_y[i];
+            // Inner loop to move in direction from selected position till board boundary or another piece is hit
+            while (isEmptySpace(s_x + x_off, s_y + y_off) && isInBoardBounds(s_x + x_off, s_y + y_off)) {
+                allowed_moves.push_back(std::make_pair(s_x + x_off, s_y + y_off));
+                x_off += m_x[i];
+                y_off += m_y[i];
+            }
+        }
+    }
+    // If the selected piece is a knight
+    else if (p_val == pieceval::KNIGHT_BLACK || p_val == pieceval::KNIGHT_WHITE) {
+        // Knight can only move to 8 possible other squares.
+        int8_t m_x[8] = {-2, -2, 2, 2, -1, -1, 1, 1};
+        int8_t m_y[8] = {1, -1, 1, -1, -2, 2, -2, 2};
+        
+        // Only one loop to go through each move
+        for (uint8_t i = 0; i < 8; i++) {
+            if (isEmptySpace(s_x + m_x[i], s_y + m_y[i]) && isInBoardBounds(s_x + m_x[i], s_y + m_y[i])) {
+                allowed_moves.push_back(std::make_pair(s_x + m_x[i], s_y + m_y[i]));
+            }
+        }
+    }
+    // If the selected piece is a queen
+    else if (p_val == pieceval::QUEEN_BLACK || p_val == pieceval::QUEEN_WHITE) {
+        // Queen can move in directions of both, rook and bishop
+        int8_t m_x[8] = {0, 0, 1, -1, -1, 1, 1, -1};
+        int8_t m_y[8] = {1, -1, 0, 0, 1, -1, 1, -1};
+
+        uint8_t x_off = 0;
+        uint8_t y_off = 0;
+
+        // Outer for loop for each direction
+        for (uint8_t i = 0; i < 8; i++) {
+            x_off = m_x[i];
+            y_off = m_y[i];
+            // Inner loop to move in direction from selected position till board boundary or another piece is hit
+            while (isEmptySpace(s_x + x_off, s_y + y_off) && isInBoardBounds(s_x + x_off, s_y + y_off)) {
+                allowed_moves.push_back(std::make_pair(s_x + x_off, s_y + y_off));
+                x_off += m_x[i];
+                y_off += m_y[i];
+            }
+        }
+    }
+    // If the selected piece is a king
+    else if (p_val == pieceval::KING_BLACK || p_val == pieceval::KING_WHITE) {
+        // King can move once in all 8 directions
+        int8_t m_x[8] = {0, 0, 1, -1, -1, 1, 1, -1};
+        int8_t m_y[8] = {1, -1, 0, 0, 1, -1, 1, -1};
+
+        // Only one loop to go through each move
+        for (uint8_t i = 0; i < 8; i++) {
+            if (isEmptySpace(s_x + m_x[i], s_y + m_y[i]) && isInBoardBounds(s_x + m_x[i], s_y + m_y[i])) {
+                allowed_moves.push_back(std::make_pair(s_x + m_x[i], s_y + m_y[i]));
+            }
+        }
+    }
+
+    return;
+}
+
+void Board::displayPossibleMoves(uint8_t s_x, uint8_t s_y) const
+{
+    for(uint8_t i = 0; i < BOARD_DIM; i++) {
+        std::cout << " \t" << (char)('A' + i);
+    }
+    std::cout << std::endl;
+    for (uint8_t i = 0; i < BOARD_DIM; i++) {
+        std::cout << i + 1 << "\t";
+        for (uint8_t j = 0; j < BOARD_DIM; j++) {
+            // If (i, j) is currently highlighted
+            if (i == s_x && j == s_y) {
+                c.setSelectedColor();
+                std::cout << static_cast<int>(matrix[i][j].getIntValue());
+                c.resetColor();
+                std::cout << "\t";
+            }
+            // If (i, j) is an allowed move:
+            else if (std::find(allowed_moves.begin(), allowed_moves.end(), std::make_pair(i, j)) != allowed_moves.end()) {
+                c.setPossibleColor();
+                std::cout << static_cast<int>(matrix[i][j].getIntValue());
+                c.resetColor();
+                std::cout << "\t";
+            }
+            else {
+                std::cout << static_cast<int>(matrix[i][j].getIntValue()) << "\t";
+            }
         }
         std::cout << std::endl;
     }
     std::cout<<std::endl;
-}
-
-int8_t Board::getPieceAtIndex(uint8_t x, uint8_t y)
-{
-    return matrix[x][y].getIntValue();
 }

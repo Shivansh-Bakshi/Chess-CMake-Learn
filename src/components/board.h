@@ -20,12 +20,18 @@ namespace ch::components {
     //
     // We use a vector to store pairs to avoid having to search the entire board everytime for making a move
     class Board {
+
         Piece matrix[BOARD_DIM][BOARD_DIM];
         std::vector<std::pair<uint8_t, uint8_t>> active_white;
         std::vector<std::pair<uint8_t, uint8_t>> active_black;
+        std::vector<std::pair<uint8_t, uint8_t>> allowed_moves;
         WinColorUtils c;
         
-        bool isSelectValid(bool currTurn, uint8_t s_x, uint8_t s_y);
+        // Returns if a position on the matrix is empty or not
+        bool isEmptySpace(int8_t p_x, int8_t p_y) const;
+
+        // Returns true if the position is withing board boundaries
+        bool isInBoardBounds(int8_t p_x, int8_t p_y) const;
 
         public:
 
@@ -43,11 +49,22 @@ namespace ch::components {
         void updateCanvas(uint8_t p_i, uint8_t p_j, uint8_t t_x, uint8_t t_y);
         
         // Display Board
-        void display();
+        void display() const;
+        
         // Display Selected Piece
-        void display(uint8_t p_i, uint8_t p_j);
+        void display(uint8_t p_i, uint8_t p_j) const;
 
-        int8_t getPieceAtIndex(uint8_t x, uint8_t y);
+        // Returns the value of the piece at a given position on the board
+        int8_t getPieceAtIndex(uint8_t x, uint8_t y) const;
+
+        // Returns if the selected piece is a valid piece or not, depending on the turn.
+        bool isSelectValid(bool currTurn, uint8_t s_x, uint8_t s_y) const;
+
+        // Get the possible moves a selected piece can make
+        void getPossibleMoves(uint8_t s_x, uint8_t s_y);
+
+        // Display the possible moves after getting them.
+        void displayPossibleMoves(uint8_t s_x, uint8_t s_y) const;
     };
 }
 
