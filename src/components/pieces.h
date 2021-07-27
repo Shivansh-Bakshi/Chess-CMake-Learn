@@ -2,6 +2,7 @@
 #define CH_PIECES_H
 
 #include <stdint.h>
+#include <string>
 
 namespace ch {
     namespace components {
@@ -14,17 +15,18 @@ namespace ch {
             KNIGHT_WHITE, 
             PAWN_WHITE,
             DEFAULT,
-            PAWN_BLACK, 
-            KNIGHT_BLACK, 
-            BISHOP_BLACK, 
-            ROOK_BLACK, 
-            QUEEN_BLACK, 
-            KING_BLACK
+            KING_BLACK,
+            QUEEN_BLACK,
+            ROOK_BLACK,
+            BISHOP_BLACK,
+            KNIGHT_BLACK,
+            PAWN_BLACK
         };
 
         class Piece {
             pieceval value;
             bool moved;
+            std::wstring unicodeSymbol;
             public:
 
             // Defualt Constructor
@@ -44,6 +46,9 @@ namespace ch {
 
             // Has the piece moved from it's initial position
             bool hasMoved() const;
+
+            // Return the unicode character code corresponding to it
+            std::wstring getUnicode() const;
         };
     }
 }
