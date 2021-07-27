@@ -24,6 +24,7 @@ void Game::Move()
     x = x - '1';
 
     std::cout << "Selected Piece : " << static_cast<int>(b.getPieceAtIndex(x, y)) << "\n";
+    b.display(x, y);
 }
 
 void Game::Display()
