@@ -29,6 +29,11 @@ namespace ch {
                 SetConsoleTextAttribute(hConsole, BACKGROUND_GREEN);
             }
 
+            void setBackgroundLight() const
+            {
+                SetConsoleTextAttribute(hConsole, BACKGROUND_INTENSITY);
+            }
+
             void resetColor() const
             {
                 SetConsoleTextAttribute(hConsole, Attributes);
