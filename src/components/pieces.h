@@ -24,6 +24,7 @@ namespace ch {
 
         class Piece {
             pieceval value;
+            bool moved;
             public:
 
             // Defualt Constructor
@@ -32,11 +33,17 @@ namespace ch {
             // New piece of given value
             Piece(pieceval);
 
+            // Updated moved status to true
+            void updateMoved();
+
             // Get Piece value as pieceval
             pieceval getValue() const;
 
             // Get Piece value as integer
             int8_t getIntValue() const;
+
+            // Has the piece moved from it's initial position
+            bool hasMoved() const;
         };
     }
 }
