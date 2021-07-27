@@ -7,6 +7,7 @@ using namespace ch::utils;
 
 Board::Board()
 {
+    c = WinColorUtils();
     for (int i = 0; i < BOARD_DIM; i++) {
         for (int j = 0 ; j < BOARD_DIM; j++) {
             matrix[i][j] = Piece(pieceval::DEFAULT);
@@ -106,6 +107,28 @@ void Board::display()
     for (uint8_t i = 0; i < BOARD_DIM; i++) {
         std::cout << i + 1 << "\t";
         for (uint8_t j = 0; j < BOARD_DIM; j++) {
+            std::cout << static_cast<int>(matrix[i][j].getIntValue()) << "\t";
+        }
+        std::cout << std::endl;
+    }
+    std::cout<<std::endl;
+}
+
+void Board::display(uint8_t p_i, uint8_t p_j)
+{
+    for(uint8_t i = 0; i < BOARD_DIM; i++) {
+        std::cout << " \t" << (char)('A' + i);
+    }
+    std::cout << std::endl;
+    for (uint8_t i = 0; i < BOARD_DIM; i++) {
+        std::cout << i + 1 << "\t";
+        for (uint8_t j = 0; j < BOARD_DIM; j++) {
+            if (i == p_i && j == p_j) {
+                c.setSelectedColor();
+                std::cout << static_cast<int>(matrix[i][j].getIntValue()) << "\t";
+                c.resetColor();
+                continue;
+            }
             std::cout << static_cast<int>(matrix[i][j].getIntValue()) << "\t";
         }
         std::cout << std::endl;

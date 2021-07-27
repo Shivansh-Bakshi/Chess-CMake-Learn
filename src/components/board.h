@@ -4,8 +4,12 @@
 #include <stdint.h>
 #include <vector>
 #include "pieces.h"
+#include "../utils/wincolorutils.h"
 
-static constexpr uint8_t BOARD_DIM = 8;
+#define BOARD_DIM  (8)
+#define SELECTED_COLOR (14)
+
+using namespace ch::utils;
 
 namespace ch::components {
     
@@ -19,6 +23,7 @@ namespace ch::components {
         Piece matrix[BOARD_DIM][BOARD_DIM];
         std::vector<std::pair<uint8_t, uint8_t>> active_white;
         std::vector<std::pair<uint8_t, uint8_t>> active_black;
+        WinColorUtils c;
         
         bool isSelectValid(bool currTurn, uint8_t s_x, uint8_t s_y);
 
@@ -39,6 +44,8 @@ namespace ch::components {
         
         // Display Board
         void display();
+        // Display Selected Piece
+        void display(uint8_t p_i, uint8_t p_j);
 
         int8_t getPieceAtIndex(uint8_t x, uint8_t y);
     };
