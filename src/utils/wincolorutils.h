@@ -19,12 +19,17 @@ namespace ch {
                 Attributes = Info.wAttributes;
             }
 
-            void setSelectedColor() 
+            void setSelectedColor() const
+            {
+                SetConsoleTextAttribute(hConsole, BACKGROUND_RED);
+            }
+
+            void setPossibleColor() const
             {
                 SetConsoleTextAttribute(hConsole, BACKGROUND_GREEN);
             }
 
-            void resetColor()
+            void resetColor() const
             {
                 SetConsoleTextAttribute(hConsole, Attributes);
             }
