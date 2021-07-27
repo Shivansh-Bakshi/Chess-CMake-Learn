@@ -18,6 +18,12 @@ namespace ch {
             // false = Game has ended
             bool c_isActive;
 
+            // currently highlighted (x, y)
+            uint8_t x;
+            uint8_t y;
+
+            void moveHighlight();
+
             public:
 
             // Default Constructor
