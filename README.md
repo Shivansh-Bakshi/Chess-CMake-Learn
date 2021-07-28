@@ -36,4 +36,4 @@ The game displays possible moves after a selection has been made by highlighting
 
 #### Taking a Piece
 If an opposing piece is on the path of the selected piece, it can take it as it will be highlighted as a possible move.  
-![taking_a_piece](./images/TakingaPiece.png)
+![taking_a_piece](./images/TakingAPiece.png)
