@@ -24,6 +24,15 @@ bool Board::isInBoardBounds(int8_t p_x, int8_t p_y) const
     return true;
 }
 
+bool Board::isOpposingPiecePresent(int8_t p, int8_t p_x, int8_t p_y) const
+{
+    int8_t d_p = matrix[p_x][p_y].getIntValue();
+    if ((p ^ d_p) < 0 && (p & d_p) != 0) {
+        return true;
+    }
+    return false;
+}
+
 Board::Board()
 {
     c = WinColorUtils();
@@ -90,11 +99,33 @@ void Board::setup()
 
 }
 
-void Board::updateCanvas(uint8_t s_x, uint8_t s_y, uint8_t d_x, uint8_t d_y)
+void Board::updateCanvas(bool currTurn, uint8_t s_x, uint8_t s_y, uint8_t d_x, uint8_t d_y)
 {
     Piece temp = matrix[s_x][s_y];
     matrix[s_x][s_y] = Piece(pieceval::DEFAULT);
+    // Remove old location from active list
+    if (currTurn) {
+       std::vector<std::pair<uint8_t, uint8_t>>::iterator pos = std::find(active_white.begin(), active_white.end(), std::make_pair(s_x, s_y));
+       if (pos != active_white.end()) {
+           active_white.erase(pos);
+       } 
+    } else {
+       std::vector<std::pair<uint8_t, uint8_t>>::iterator pos = std::find(active_black.begin(), active_black.end(), std::make_pair(s_x, s_y));
+       if (pos != active_black.end()) {
+           active_black.erase(pos);
+       } 
+    }
     matrix[d_x][d_y] = temp;
+    // set hasMoved to true if it hasn't
+    if (!matrix[d_x][d_y].hasMoved()) {
+        matrix[d_x][d_y].updateMoved();
+    }
+    // Insert new position in active list
+    if (currTurn) {
+        active_white.push_back(std::make_pair(d_x, d_y));
+    } else {
+        active_black.push_back(std::make_pair(d_x, d_y));
+    }
 }
 
 
@@ -198,6 +229,15 @@ uint8_t Board::getPossibleMoves(uint8_t s_x, uint8_t s_y)
             countMoves++;
             }  
         }
+        // If an opposing piece is on the immediate front diagonals, it can take it
+        if (isOpposingPiecePresent(p.getIntValue(), s_x - 1, s_y - 1)) {
+            allowed_moves.push_back(std::make_pair(s_x - 1, s_y - 1));
+            countMoves++;
+        }
+        if (isOpposingPiecePresent(p.getIntValue(), s_x - 1, s_y + 1)) {
+            allowed_moves.push_back(std::make_pair(s_x - 1, s_y + 1));
+            countMoves++;
+        }
     }
     // If the selected piece is a white pawn
     else if (p_val == pieceval::PAWN_WHITE) {
@@ -218,6 +258,15 @@ uint8_t Board::getPossibleMoves(uint8_t s_x, uint8_t s_y)
                 countMoves++;
             }  
         }
+        // If an opposing piece is on the immediate below diagonals, it can take it
+        if (isOpposingPiecePresent(p.getIntValue(), s_x + 1, s_y - 1)) {
+            allowed_moves.push_back(std::make_pair(s_x + 1, s_y - 1));
+            countMoves++;
+        }
+        if (isOpposingPiecePresent(p.getIntValue(), s_x + 1, s_y + 1)) {
+            allowed_moves.push_back(std::make_pair(s_x + 1, s_y + 1));
+            countMoves++;
+        }
     }
     // If the selected piece is a rook
     else if (p_val == pieceval::ROOK_BLACK || p_val == pieceval::ROOK_WHITE) {
@@ -233,9 +282,14 @@ uint8_t Board::getPossibleMoves(uint8_t s_x, uint8_t s_y)
             x_off = m_x[i];
             y_off = m_y[i];
             // Inner loop to move in direction from selected position till board boundary or another piece is hit
-            while (isEmptySpace(s_x + x_off, s_y + y_off) && isInBoardBounds(s_x + x_off, s_y + y_off)) {
+            while ((isEmptySpace(s_x + x_off, s_y + y_off) || 
+                    isOpposingPiecePresent(p.getIntValue(), s_x + x_off, s_y + y_off)) && 
+                    isInBoardBounds(s_x + x_off, s_y + y_off)) {
                 allowed_moves.push_back(std::make_pair(s_x + x_off, s_y + y_off));
                 countMoves++;
+                if (isOpposingPiecePresent(p.getIntValue(), s_x + x_off, s_y + y_off)) {
+                    break;
+                }
                 x_off += m_x[i];
                 y_off += m_y[i];
             }
@@ -255,9 +309,14 @@ uint8_t Board::getPossibleMoves(uint8_t s_x, uint8_t s_y)
             x_off = m_x[i];
             y_off = m_y[i];
             // Inner loop to move in direction from selected position till board boundary or another piece is hit
-            while (isEmptySpace(s_x + x_off, s_y + y_off) && isInBoardBounds(s_x + x_off, s_y + y_off)) {
+            while ((isEmptySpace(s_x + x_off, s_y + y_off) || 
+                    isOpposingPiecePresent(p.getIntValue(), s_x + x_off, s_y + y_off)) && 
+                    isInBoardBounds(s_x + x_off, s_y + y_off)) {
                 allowed_moves.push_back(std::make_pair(s_x + x_off, s_y + y_off));
                 countMoves++;
+                if (isOpposingPiecePresent(p.getIntValue(), s_x + x_off, s_y + y_off)) {
+                    break;
+                }
                 x_off += m_x[i];
                 y_off += m_y[i];
             }
@@ -271,7 +330,9 @@ uint8_t Board::getPossibleMoves(uint8_t s_x, uint8_t s_y)
         
         // Only one loop to go through each move
         for (uint8_t i = 0; i < 8; i++) {
-            if (isEmptySpace(s_x + m_x[i], s_y + m_y[i]) && isInBoardBounds(s_x + m_x[i], s_y + m_y[i])) {
+            if ((isEmptySpace(s_x + m_x[i], s_y + m_y[i]) || 
+                isOpposingPiecePresent(p.getIntValue(), s_x + m_x[i], s_y + m_y[i])) && 
+                isInBoardBounds(s_x + m_x[i], s_y + m_y[i])) {
                 allowed_moves.push_back(std::make_pair(s_x + m_x[i], s_y + m_y[i]));
                 countMoves++;
             }
@@ -291,9 +352,14 @@ uint8_t Board::getPossibleMoves(uint8_t s_x, uint8_t s_y)
             x_off = m_x[i];
             y_off = m_y[i];
             // Inner loop to move in direction from selected position till board boundary or another piece is hit
-            while (isEmptySpace(s_x + x_off, s_y + y_off) && isInBoardBounds(s_x + x_off, s_y + y_off)) {
+            while ((isEmptySpace(s_x + x_off, s_y + y_off) || 
+                    isOpposingPiecePresent(p.getIntValue(), s_x + x_off, s_y + y_off)) && 
+                    isInBoardBounds(s_x + x_off, s_y + y_off)) {
                 allowed_moves.push_back(std::make_pair(s_x + x_off, s_y + y_off));
                 countMoves++;
+                if (isOpposingPiecePresent(p.getIntValue(), s_x + x_off, s_y + y_off)) {
+                    break;
+                }
                 x_off += m_x[i];
                 y_off += m_y[i];
             }
@@ -307,7 +373,9 @@ uint8_t Board::getPossibleMoves(uint8_t s_x, uint8_t s_y)
 
         // Only one loop to go through each move
         for (uint8_t i = 0; i < 8; i++) {
-            if (isEmptySpace(s_x + m_x[i], s_y + m_y[i]) && isInBoardBounds(s_x + m_x[i], s_y + m_y[i])) {
+            if ((isEmptySpace(s_x + m_x[i], s_y + m_y[i]) || 
+                isOpposingPiecePresent(p.getIntValue(), s_x + m_x[i], s_y + m_y[i])) && 
+                isInBoardBounds(s_x + m_x[i], s_y + m_y[i])) {
                 allowed_moves.push_back(std::make_pair(s_x + m_x[i], s_y + m_y[i]));
                 countMoves++;
             }
