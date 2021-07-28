@@ -22,7 +22,7 @@ namespace ch {
             uint8_t x;
             uint8_t y;
 
-            void moveHighlight(bool displayPossible = false);
+            uint8_t moveHighlight(bool displayPossible = false);
 
             public:
 
@@ -33,7 +33,10 @@ namespace ch {
             void Move();
 
             // Display the board
-            void Display();
+            void Display() const;
+
+            // Returns c_isActive
+            bool isGameActive() const;
         };
     }
 }
