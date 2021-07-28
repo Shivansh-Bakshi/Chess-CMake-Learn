@@ -33,6 +33,9 @@ namespace ch::components {
         // Returns true if the position is withing board boundaries
         bool isInBoardBounds(int8_t p_x, int8_t p_y) const;
 
+        // Return true if an opposing piece is present at position (p_x, p_y)
+        bool isOpposingPiecePresent(int8_t p, int8_t p_x, int8_t p_y) const;
+
         public:
 
         // Default Constructor
@@ -46,7 +49,7 @@ namespace ch::components {
         // Parameters:
         // s_x, s_y = x,y index of source of piece on the board
         // d_x, d_y = destination in x, y of the piece
-        void updateCanvas(uint8_t s_x, uint8_t s_y, uint8_t d_x, uint8_t d_y);
+        void updateCanvas(bool currTurn, uint8_t s_x, uint8_t s_y, uint8_t d_x, uint8_t d_y);
         
         // Display Board
         void display() const;
