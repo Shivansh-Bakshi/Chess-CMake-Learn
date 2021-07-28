@@ -65,6 +65,10 @@ Piece::Piece(pieceval value)
             this->unicodeSymbol = L"\u265F";
             break;
         }
+        case pieceval::DEFAULT : {
+            this->unicodeSymbol = L"\u200B";
+            break;
+        }
     }
 }
 
