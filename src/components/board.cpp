@@ -115,6 +115,20 @@ void Board::updateCanvas(bool currTurn, uint8_t s_x, uint8_t s_y, uint8_t d_x, u
            active_black.erase(pos);
        } 
     }
+    // if destination has an opposing piece which is being taken, remove it from active list of opposite side
+    if (isOpposingPiecePresent(temp.getIntValue(), d_x, d_y)) {
+        if (currTurn) {
+            std::vector<std::pair<uint8_t, uint8_t>>::iterator pos = std::find(active_black.begin(), active_black.end(), std::make_pair(d_x, d_y));
+            if (pos != active_black.end()) {
+                active_black.erase(pos);
+            }
+        } else {
+            std::vector<std::pair<uint8_t, uint8_t>>::iterator pos = std::find(active_white.begin(), active_white.end(), std::make_pair(d_x, d_y));
+            if (pos != active_white.end()) {
+                active_white.erase(pos);
+            } 
+        }
+    }
     matrix[d_x][d_y] = temp;
     // set hasMoved to true if it hasn't
     if (!matrix[d_x][d_y].hasMoved()) {
