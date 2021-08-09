@@ -5,7 +5,8 @@ This is all done for my understanding on the working of CMake in the process of 
 
 ## Build Instructions
 Currently, only windows 10 is supported as Windows API functions have been used to display unicode symbols of the chess pieces and adding background colors to the board.  
-In short, make a build directory inside the project folder, call cmake to configure in the build directory. Then build
+Further, the unicode symbols do not display on the default cmd prompt of windows. I have used Windows Terminal for the same.
+Make a build directory inside the project folder, call cmake to configure in the build directory. Then build
 
 ```
 mkdir build && cd build
